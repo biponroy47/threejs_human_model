@@ -1,0 +1,11 @@
+Model Information:
+* title:	HUMAN_BODY
+* source:	https://sketchfab.com/3d-models/human-body-f022e4a3641943328b2fbfdf0f7c3e1e
+* author:	vistaalienprime (https://sketchfab.com/vistaalienprime5665288)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "HUMAN_BODY" (https://sketchfab.com/3d-models/human-body-f022e4a3641943328b2fbfdf0f7c3e1e) by vistaalienprime (https://sketchfab.com/vistaalienprime5665288) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

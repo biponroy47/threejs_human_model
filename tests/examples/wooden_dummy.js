@@ -14,7 +14,7 @@ export function wooden_dummy() {
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
-  const light = new THREE.DirectionalLight(0xffffff, 1)
+  const light = new THREE.DirectionalLight(0xffffff, 1.75)
   light.position.set(5, 10, 7.5)
   scene.add(light)
 
@@ -29,6 +29,12 @@ export function wooden_dummy() {
     function (object) {
       object.scale.set(0.05, 0.05, 0.05)
       scene.add(object)
+      console.log(object)
+      object.traverse((child) => {
+        if (child.isMesh) {
+          console.log(`Mesh name: ${child.name}`)
+        }
+      })
     },
     // Called while loading is progressing
     function (xhr) {

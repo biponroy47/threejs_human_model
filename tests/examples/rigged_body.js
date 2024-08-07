@@ -1,9 +1,5 @@
-// link to model
-// https://sketchfab.com/3d-models/generalized-human-body-ff827a4f988d4ebbb7435e579e72848e
-
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
 export function rigged_body() {
   const scene = new THREE.Scene()
@@ -22,11 +18,22 @@ export function rigged_body() {
   light.position.set(0, 1, 1).normalize()
   scene.add(light)
 
+  let armBone
+
   const loader = new GLTFLoader()
   loader.load(
-    '/public/generalized_human_body/scene.gltf',
+    '/generalized_human_body/scene.gltf',
     function (gltf) {
-      scene.add(gltf.scene)
+      const model = gltf.scene
+      scene.add(model)
+
+      model.traverse((object) => {
+        if (object.isBone) {
+          console.log(object.name)
+        }
+      })
+      model.traverse((object) => {})
+
       renderer.render(scene, camera)
     },
     undefined,
@@ -39,9 +46,6 @@ export function rigged_body() {
   camera.position.y = 1
   camera.lookAt(0, 1, 0)
 
-  //   const controls = new OrbitControls(camera, renderer.domElement)
-  //   controls.enableZoom = true
-
   const gridHelper = new THREE.GridHelper(100, 100)
   scene.add(gridHelper)
 
@@ -50,7 +54,10 @@ export function rigged_body() {
 
   function animate() {
     requestAnimationFrame(animate)
-    //controls.update()
+    if (armBone) {
+      let i = 1
+      armBone.rotation.x = ++i
+    }
     renderer.render(scene, camera)
   }
   animate()

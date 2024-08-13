@@ -10,5 +10,8 @@
 // import { rigged_body } from './examples/rigged_body'
 // rigged_body()
 
-import { wooden_dummy } from './examples/wooden_dummy'
-wooden_dummy()
+// import { wooden_dummy } from './examples/wooden_dummy'
+// wooden_dummy()
+
+import { dummy_v2 } from './examples/dummy_v2'
+dummy_v2()

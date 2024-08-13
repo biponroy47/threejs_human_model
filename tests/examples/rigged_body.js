@@ -14,8 +14,8 @@ export function rigged_body() {
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
-  const light = new THREE.DirectionalLight(0xffffff, 4)
-  light.position.set(0, 1, 1).normalize()
+  const light = new THREE.PointLight(0xffffff, 100)
+  light.position.set(5, 10, 5).normalize()
   scene.add(light)
 
   let armBone

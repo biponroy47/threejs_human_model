@@ -22,3 +22,8 @@ I've also begun to explore OpenCV out of curiosity, specifically the OpenPose mo
 
 ![MediaPipe ](https://github.com/biponroy47/threejs_human_model/blob/main//images/blasepose_points.png?raw=true) 
 
+#### 3rd Update
+
+So now I've implemented the human armature into my model using blender. After a few exporting issues, I now have a visible rendered dummy. However it appears I did not correctly rig my model. When moving a bone, it appears the bones move correctly but they are not attached to the model. Below is a photo of the imported model, the green line horizontal to the head is the path of the head bone I tried to move. As you can see it simply floated away and the model remained idle.
+
+![Imported Rig ](https://github.com/biponroy47/threejs_human_model/blob/main//images/imported_rig.png?raw=true) 

@@ -1,11 +1,14 @@
+import './App.css'
 import VideoUploadPlayer from './components/VideoUploadPlayer'
 
 function App() {
   return (
     <>
       <h1>Tensorflow Tests</h1>
-      <VideoUploadPlayer />
-      <VideoUploadPlayer />
+      <div className='video-container'>
+        <VideoUploadPlayer />
+        <VideoUploadPlayer />
+      </div>
     </>
   )
 }

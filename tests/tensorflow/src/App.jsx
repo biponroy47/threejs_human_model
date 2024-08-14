@@ -1,15 +1,15 @@
+import VideoUploadPlayer from './components/VideoUploadPlayer/VideoUploadPlayer'
 import './App.css'
-import VideoUploadPlayer from './components/VideoUploadPlayer'
 
 function App() {
   return (
-    <>
+    <div className='App'>
       <h1>Tensorflow Tests</h1>
-      <div className='video-container'>
-        <VideoUploadPlayer />
-        <VideoUploadPlayer />
+      <div className='video-row'>
+        <VideoUploadPlayer videoIndex={1} />
+        <VideoUploadPlayer videoIndex={2} />
       </div>
-    </>
+    </div>
   )
 }
 

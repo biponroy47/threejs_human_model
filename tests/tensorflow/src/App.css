@@ -1,17 +1,8 @@
 /* src/App.css */
-.video-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  justify-items: center;
-  /* align-items: center; */
-  height: 100vh;
+.video-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 20px;
 }
 
-@media (max-width: 800px) {
-  .video-container {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    justify-items: center;
-  }
-}

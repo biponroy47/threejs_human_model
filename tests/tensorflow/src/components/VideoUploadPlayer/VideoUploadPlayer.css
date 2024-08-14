@@ -1,0 +1,53 @@
+/* src/components/VideoUploadPlayer.css */
+.video-upload-container {
+  text-align: center;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.video-upload-container.uploaded {
+  max-width: 50%;
+  flex-grow: 1;
+}
+
+.video-container {
+  margin-top: 20px;
+}
+
+.video-element {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.button-row {
+  display: flex;
+  justify-content: space-around; /* Distributes buttons evenly across the row */
+  margin-top: 20px;
+}
+
+.button-with-label {
+  text-align: center;
+}
+
+.button-with-label p {
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #333;
+}
+
+.button-with-label button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  transition: background-color 0.3s ease;
+}
+
+.button-with-label button:hover {
+  background-color: #ddd;
+}

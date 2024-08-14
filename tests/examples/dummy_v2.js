@@ -18,11 +18,11 @@ export function dummy_v2() {
   light.position.set(-2, 4, 5)
   scene.add(light)
 
-  let part
+  let bones = []
 
   const loader = new GLTFLoader()
   loader.load(
-    '/wooden_dummy/test/blender.glb',
+    '/wooden_dummy/rigged/blender.glb',
     function (gltf) {
       const model = gltf.scene
       model.scale.set(0.01, 0.01, 0.01)
@@ -33,9 +33,7 @@ export function dummy_v2() {
         }
         if (object.isBone) {
           console.log('Bone found:', object.name)
-        }
-        if (object.name === 'head') {
-          part = object
+          bones.push(object)
         }
       })
 
@@ -43,6 +41,7 @@ export function dummy_v2() {
       scene.add(skeletonHelper)
 
       scene.add(model)
+      renderer.render(scene, camera)
     },
     undefined,
     function (error) {
@@ -63,12 +62,10 @@ export function dummy_v2() {
   const controls = new OrbitControls(camera, renderer.domElement)
   controls.enableZoom = true
 
+  console.log(bones)
+
   function animate() {
     requestAnimationFrame(animate)
-    if (part) {
-      console.log('PART FOUND')
-      part.position.x += 1
-    }
     renderer.render(scene, camera)
   }
   animate()

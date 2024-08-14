@@ -13,6 +13,7 @@
 
 .video-container {
   margin-top: 20px;
+  position: relative; /* Position the video correctly */
 }
 
 .video-element {
@@ -20,11 +21,19 @@
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgb(7, 106, 167);
+}
+
+.pose-overlay {
+  width: 100%; /* Ensure the canvas matches the video width */
+  height: auto; /* Adjust the canvas height to match the video */
+  border: 2px solid red; /* Add a border to see the canvas */
+  margin-top: 20px; /* Add space between buttons and canvas */
 }
 
 .button-row {
   display: flex;
-  justify-content: space-around; /* Distributes buttons evenly across the row */
+  justify-content: space-evenly; /* Distributes buttons evenly across the row */
   margin-top: 20px;
 }
 
@@ -32,15 +41,9 @@
   text-align: center;
 }
 
-.button-with-label p {
-  margin-bottom: 5px;
-  font-size: 14px;
-  color: #333;
-}
-
 .button-with-label button {
-  padding: 10px 20px;
-  font-size: 16px;
+  padding: 10px 10px;
+  font-size: 14px;
   cursor: pointer;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -49,5 +52,5 @@
 }
 
 .button-with-label button:hover {
-  background-color: #ddd;
+  background-color: #c0c0c0;
 }

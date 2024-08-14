@@ -4,7 +4,7 @@ import './App.css'
 function App() {
   return (
     <div className='App'>
-      <h1>Tensorflow Tests</h1>
+      <h1 className='site-title'>Tensorflow Tests</h1>
       <div className='video-row'>
         <VideoUploadPlayer videoIndex={1} />
         <VideoUploadPlayer videoIndex={2} />

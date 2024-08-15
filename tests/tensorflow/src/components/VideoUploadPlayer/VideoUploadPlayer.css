@@ -13,7 +13,7 @@
 
 .video-container {
   margin-top: 20px;
-  position: relative; /* Position the video correctly */
+  position: relative;
 }
 
 .video-element {
@@ -25,15 +25,16 @@
 }
 
 .pose-overlay {
-  width: 100%; /* Ensure the canvas matches the video width */
-  height: auto; /* Adjust the canvas height to match the video */
-  border: 2px solid red; /* Add a border to see the canvas */
-  margin-top: 20px; /* Add space between buttons and canvas */
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 2px solid red;
+  margin-top: 20px;
 }
 
 .button-row {
   display: flex;
-  justify-content: space-evenly; /* Distributes buttons evenly across the row */
+  justify-content: space-evenly;
   margin-top: 20px;
 }
 
@@ -52,6 +53,5 @@
 }
 
 .button-with-label button.active {
-  background-color: #36c04d; /* Example color for active state */
-  color: rgb(0, 0, 0); /* Optional: change text color when active */
+  background-color: #36c04d;
 }

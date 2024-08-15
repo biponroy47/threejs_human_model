@@ -2,12 +2,11 @@
 .site-title {
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 .video-row {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 20px;
+  /* align-items: center; */
+  gap: 10px;
 }

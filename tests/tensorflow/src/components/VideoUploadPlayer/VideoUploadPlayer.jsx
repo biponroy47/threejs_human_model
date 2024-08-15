@@ -40,30 +40,57 @@ const VideoUploadPlayer = ({ videoIndex }) => {
   }, [])
 
   const detectPose = async () => {
-    if (detector && videoRef.current && isMoveNetActive) {
+    console.log('DetectPose function started')
+    console.log(detector)
+    console.log(videoRef.current)
+    console.log(isMoveNetActive)
+
+    if (detector && videoRef.current && !isMoveNetActive) {
       const video = videoRef.current
+      console.log('Video ready state:', video.readyState)
 
       const canvas = canvasRef.current
       const ctx = canvas.getContext('2d')
 
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+
       const detect = async () => {
+        console.log('Detect function running')
+        //console.log('Video ready state:', video.readyState)
         if (video.readyState >= 2) {
+          // console.log('Video is ready, estimating poses')
           const poses = await detector.estimatePoses(video)
+          // console.log('Detected poses:', poses) // Should output detected poses
           ctx.clearRect(0, 0, canvas.width, canvas.height) // Clear the previous frame
           drawPoses(poses, ctx) // Draw new poses
 
           requestAnimationFrame(detect) // Continue detecting for the next frame
         }
       }
+      console.log(
+        'Canvas width:',
+        canvas.width,
+        'Canvas height:',
+        canvas.height
+      )
+      console.log(
+        'Video width:',
+        video.videoWidth,
+        'Video height:',
+        video.videoHeight
+      )
 
       detect() // Start detection
     }
   }
 
   const drawPoses = (poses, ctx) => {
+    // console.log('Detected poses:', poses) // Log the poses array
     poses.forEach((pose) => {
       pose.keypoints.forEach((keypoint) => {
-        if (keypoint.score > 0.5) {
+        if (keypoint.score > 0.01) {
+          // console.log(`Drawing keypoint at (${keypoint.x}, ${keypoint.y})`) // Log each keypoint position
           // Only draw keypoints with a high confidence score
           const { x, y } = keypoint
           ctx.beginPath()

@@ -8,8 +8,9 @@ const VideoUploadPlayer = ({ videoIndex }) => {
   const [videoSrc, setVideoSrc] = useState(null)
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
-  const [detector, setDetector] = useState(null)
+  const [detector, setDetector] = useState({ movenet: null, posenet: null })
   const [isMoveNetActive, setIsMoveNetActive] = useState(false)
+  const [isPoseNetActive, setIsPoseNetActive] = useState(false)
   const animationIdRef = useRef(null)
 
   const handleFileUpload = (event) => {
@@ -23,24 +24,34 @@ const VideoUploadPlayer = ({ videoIndex }) => {
   }
 
   useEffect(() => {
-    const loadModel = async () => {
+    const loadModels = async () => {
       await tf.ready()
       await tf.setBackend('webgl')
-      const detectorConfig = {
-        modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-      }
-      const detector = await poseDetection.createDetector(
+
+      const movenetDetector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
-        detectorConfig
+        { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
       )
-      setDetector(detector)
+
+      const posenetDetector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.PoseNet,
+        {
+          architecture: 'MobileNetV1',
+          outputStride: 16,
+          inputResolution: { width: 1920, height: 1080 },
+          multiplier: 0.75,
+        }
+      )
+
+      setDetector({ movenet: movenetDetector, posenet: posenetDetector })
     }
-    loadModel()
+
+    loadModels()
   }, [])
 
   useEffect(() => {
     const detectPose = async () => {
-      if (detector && videoRef.current && isMoveNetActive) {
+      if ((isMoveNetActive || isPoseNetActive) && videoRef.current) {
         const video = videoRef.current
         const canvas = canvasRef.current
         canvas.width = video.videoWidth
@@ -48,18 +59,33 @@ const VideoUploadPlayer = ({ videoIndex }) => {
         const ctx = canvas.getContext('2d')
 
         const detect = async () => {
-          const poses = await detector.estimatePoses(video)
           ctx.clearRect(0, 0, canvas.width, canvas.height)
-          drawPoses(poses, ctx)
+          if (isMoveNetActive && detector.movenet) {
+            const movenetPoses = await detector.movenet.estimatePoses(video)
+            drawPoses(movenetPoses, ctx, 'red')
+          }
+
+          if (isPoseNetActive && detector.posenet) {
+            console.log(
+              `Canvas Width: ${canvas.width}, Canvas Height: ${canvas.height}`
+            )
+            console.log(
+              `Video Width: ${video.videoWidth}, Video Height: ${video.videoHeight}`
+            )
+            const posenetPoses = await detector.posenet.estimatePoses(video)
+            drawPoses(posenetPoses, ctx, 'blue')
+          }
           animationIdRef.current = requestAnimationFrame(detect)
         }
         detect()
+      } else {
+        stopDetection()
       }
     }
-    isMoveNetActive ? detectPose() : stopDetection()
-  }, [isMoveNetActive, detector])
+    detectPose()
+  }, [isMoveNetActive, isPoseNetActive, detector])
 
-  const drawPoses = (poses, ctx) => {
+  const drawPoses = (poses, ctx, color) => {
     const baseSize = 5
     const baseLineWidth = 3
     const scaleX = canvasRef.current.width / 640
@@ -71,7 +97,7 @@ const VideoUploadPlayer = ({ videoIndex }) => {
       const { x, y } = keypoint
       ctx.beginPath()
       ctx.arc(x, y, dotSize, 0, 2 * Math.PI)
-      ctx.fillStyle = 'red'
+      ctx.fillStyle = color
       ctx.fill()
     }
 
@@ -80,7 +106,7 @@ const VideoUploadPlayer = ({ videoIndex }) => {
         poseDetection.SupportedModels.MoveNet
       )
       ctx.lineWidth = lineWidth
-      ctx.strokeStyle = 'red'
+      ctx.strokeStyle = color
 
       adjacentKeyPoints.forEach(([i, j]) => {
         const kp1 = keypoints[i]
@@ -115,10 +141,15 @@ const VideoUploadPlayer = ({ videoIndex }) => {
 
   const handleOffClick = () => {
     setIsMoveNetActive(false)
+    setIsPoseNetActive(false)
   }
 
   const handleMoveNetToggle = () => {
     setIsMoveNetActive((prevIsMoveNetActive) => !prevIsMoveNetActive)
+  }
+
+  const handlePoseNetToggle = () => {
+    setIsPoseNetActive((prevIsPoseNetActive) => !prevIsPoseNetActive)
   }
 
   return (
@@ -153,7 +184,11 @@ const VideoUploadPlayer = ({ videoIndex }) => {
               </button>
             </div>
             <div className='button-with-label'>
-              <button onClick={() => console.log('temp')}>PoseNet</button>
+              <button
+                className={isPoseNetActive ? 'active' : ''}
+                onClick={handlePoseNetToggle}>
+                PoseNet
+              </button>
             </div>
             <div className='button-with-label'>
               <button onClick={() => console.log('temp')}>BlazePose</button>

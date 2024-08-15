@@ -37,10 +37,6 @@
   margin-top: 20px;
 }
 
-.button-with-label {
-  text-align: center;
-}
-
 .button-with-label button {
   padding: 10px 10px;
   font-size: 14px;
@@ -53,4 +49,9 @@
 
 .button-with-label button:hover {
   background-color: #c0c0c0;
+}
+
+.button-with-label button.active {
+  background-color: #36c04d; /* Example color for active state */
+  color: rgb(0, 0, 0); /* Optional: change text color when active */
 }

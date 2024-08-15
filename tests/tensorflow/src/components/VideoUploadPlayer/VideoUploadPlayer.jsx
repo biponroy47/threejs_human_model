@@ -41,10 +41,10 @@ const VideoUploadPlayer = ({ videoIndex }) => {
 
   const detectPose = async () => {
     console.log('DetectPose function started')
-    console.log(detector)
-    console.log(videoRef.current)
-    console.log(isMoveNetActive)
-
+    // console.log(detector)
+    // console.log(videoRef.current)
+    // console.log(isMoveNetActive)
+    // console.log('Video ready state:', videoRef.current.readyState)
     if (detector && videoRef.current && !isMoveNetActive) {
       const video = videoRef.current
       console.log('Video ready state:', video.readyState)
@@ -86,6 +86,10 @@ const VideoUploadPlayer = ({ videoIndex }) => {
   }
 
   const drawPoses = (poses, ctx) => {
+    const baseSize = 5 // Base dot size
+    const scaleX = canvasRef.current.width / 640 // Assuming 640 is the standard width
+    const scaleY = canvasRef.current.height / 480 // Assuming 480 is the standard height
+    const dotSize = baseSize * Math.min(scaleX, scaleY) // Scale dot size proportionally
     // console.log('Detected poses:', poses) // Log the poses array
     poses.forEach((pose) => {
       pose.keypoints.forEach((keypoint) => {
@@ -94,7 +98,7 @@ const VideoUploadPlayer = ({ videoIndex }) => {
           // Only draw keypoints with a high confidence score
           const { x, y } = keypoint
           ctx.beginPath()
-          ctx.arc(x, y, 5, 0, 2 * Math.PI)
+          ctx.arc(x, y, dotSize, 0, 2 * Math.PI)
           ctx.fillStyle = 'red'
           ctx.fill()
         }
@@ -106,6 +110,7 @@ const VideoUploadPlayer = ({ videoIndex }) => {
     setIsMoveNetActive(!isMoveNetActive)
     if (!isMoveNetActive) {
       console.log(`Video ${videoIndex}: MoveNet is now ON`)
+      videoRef.current.play()
       detectPose() // Start pose detection when MoveNet is enabled
     } else {
       console.log(`Video ${videoIndex}: MoveNet is now OFF`)
@@ -140,19 +145,32 @@ const VideoUploadPlayer = ({ videoIndex }) => {
               src={videoSrc}
               controls
               className='video-element'
+              autoPlay
+              loop
             />
           </div>
           <div className='button-row'>
-            {['OFF', 'MoveNet', 'PoseNet', 'BlazePose', 'BodyPix'].map(
-              (label, buttonIndex) => (
-                <div
-                  key={buttonIndex}
-                  className='button-with-label'>
-                  <button onClick={buttonHandlers[buttonIndex]}>{label}</button>
-                </div>
-              )
-            )}
+            <div className='button-with-label'>
+              <button onClick={buttonHandlers[0]}>OFF</button>
+            </div>
+            <div className='button-with-label'>
+              <button
+                className={isMoveNetActive ? 'active' : ''}
+                onClick={buttonHandlers[1]}>
+                MoveNet
+              </button>
+            </div>
+            <div className='button-with-label'>
+              <button onClick={buttonHandlers[2]}>PoseNet</button>
+            </div>
+            <div className='button-with-label'>
+              <button onClick={buttonHandlers[3]}>BlazePose</button>
+            </div>
+            <div className='button-with-label'>
+              <button onClick={buttonHandlers[4]}>BodyPix</button>
+            </div>
           </div>
+
           <canvas
             ref={canvasRef}
             className='pose-overlay'

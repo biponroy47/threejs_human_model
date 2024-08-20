@@ -32,6 +32,13 @@
   margin-top: 20px;
 }
 
+/* .pose-overlay {
+  display: block;
+  margin-bottom: 20px;
+  width: 100%;
+  height: auto;
+} */
+
 .button-row {
   display: flex;
   justify-content: space-evenly;

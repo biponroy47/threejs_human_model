@@ -11,7 +11,8 @@ const VideoUploadPlayer = ({ videoIndex }) => {
   const [detector, setDetector] = useState({ movenet: null, posenet: null })
   const [isMoveNetActive, setIsMoveNetActive] = useState(false)
   const [isPoseNetActive, setIsPoseNetActive] = useState(false)
-  const animationIdRef = useRef(null)
+  const animationIdMoveNetRef = useRef(null)
+  const animationIdPoseNetRef = useRef(null)
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0]
@@ -38,7 +39,7 @@ const VideoUploadPlayer = ({ videoIndex }) => {
         {
           architecture: 'MobileNetV1',
           outputStride: 16,
-          inputResolution: { width: 1920, height: 1080 },
+          inputResolution: { width: 300, height: 300 },
           multiplier: 0.75,
         }
       )
@@ -50,8 +51,8 @@ const VideoUploadPlayer = ({ videoIndex }) => {
   }, [])
 
   useEffect(() => {
-    const detectPose = async () => {
-      if ((isMoveNetActive || isPoseNetActive) && videoRef.current) {
+    const detectMoveNetPose = async () => {
+      if (isMoveNetActive && videoRef.current && detector.movenet) {
         const video = videoRef.current
         const canvas = canvasRef.current
         canvas.width = video.videoWidth
@@ -59,40 +60,71 @@ const VideoUploadPlayer = ({ videoIndex }) => {
         const ctx = canvas.getContext('2d')
 
         const detect = async () => {
+          console.log('detecting MoveNet')
           ctx.clearRect(0, 0, canvas.width, canvas.height)
-          if (isMoveNetActive && detector.movenet) {
-            const movenetPoses = await detector.movenet.estimatePoses(video)
-            drawPoses(movenetPoses, ctx, 'red')
-          }
-
-          if (isPoseNetActive && detector.posenet) {
-            console.log(
-              `Canvas Width: ${canvas.width}, Canvas Height: ${canvas.height}`
-            )
-            console.log(
-              `Video Width: ${video.videoWidth}, Video Height: ${video.videoHeight}`
-            )
-            const posenetPoses = await detector.posenet.estimatePoses(video)
-            drawPoses(posenetPoses, ctx, 'blue')
-          }
-          animationIdRef.current = requestAnimationFrame(detect)
+          const movenetPoses = await detector.movenet.estimatePoses(video)
+          drawPoses(movenetPoses, ctx, 'red')
+          animationIdMoveNetRef.current = requestAnimationFrame(detect)
         }
         detect()
       } else {
-        stopDetection()
+        stopMoveNetDetection()
       }
     }
-    detectPose()
-  }, [isMoveNetActive, isPoseNetActive, detector])
+
+    detectMoveNetPose()
+  }, [isMoveNetActive, detector.movenet])
+
+  useEffect(() => {
+    let cancelDetection = false
+
+    const detectPoseNetPose = async () => {
+      if (isPoseNetActive && videoRef.current && detector.posenet) {
+        const video = videoRef.current
+        const canvas = canvasRef.current
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        const ctx = canvas.getContext('2d')
+
+        const detect = async () => {
+          console.log('poseNet detection')
+          if (!isPoseNetActive || cancelDetection) return
+
+          ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+          // Perform pose estimation
+          const posenetPoses = await detector.posenet.estimatePoses(video)
+
+          // Draw the poses
+          drawPoses(posenetPoses, ctx, 'blue')
+
+          // Continue the detection loop
+          animationIdPoseNetRef.current = requestAnimationFrame(detect)
+        }
+
+        detect()
+      }
+    }
+
+    detectPoseNetPose()
+
+    return () => {
+      cancelDetection = true
+      if (animationIdPoseNetRef.current) {
+        cancelAnimationFrame(animationIdPoseNetRef.current)
+        animationIdPoseNetRef.current = null // Clear the reference
+      }
+      stopPoseNetDetection()
+    }
+  }, [isPoseNetActive, detector.posenet])
 
   const drawPoses = (poses, ctx, color) => {
     const baseSize = 5
     const baseLineWidth = 3
-    const scaleX = canvasRef.current.width / 640
-    const scaleY = canvasRef.current.height / 480
+    const scaleX = canvasRef.current.width / 1920
+    const scaleY = canvasRef.current.height / 1080
     const dotSize = baseSize * Math.min(scaleX, scaleY)
     const lineWidth = baseLineWidth * Math.min(scaleX, scaleY)
-
     const drawKeypoint = (keypoint, ctx) => {
       const { x, y } = keypoint
       ctx.beginPath()
@@ -100,18 +132,15 @@ const VideoUploadPlayer = ({ videoIndex }) => {
       ctx.fillStyle = color
       ctx.fill()
     }
-
     const drawSkeleton = (keypoints, ctx) => {
       const adjacentKeyPoints = poseDetection.util.getAdjacentPairs(
         poseDetection.SupportedModels.MoveNet
       )
       ctx.lineWidth = lineWidth
       ctx.strokeStyle = color
-
       adjacentKeyPoints.forEach(([i, j]) => {
         const kp1 = keypoints[i]
         const kp2 = keypoints[j]
-
         if (kp1.score > 0.5 && kp2.score > 0.5) {
           ctx.beginPath()
           ctx.moveTo(kp1.x, kp1.y)
@@ -120,7 +149,6 @@ const VideoUploadPlayer = ({ videoIndex }) => {
         }
       })
     }
-
     poses.forEach((pose) => {
       pose.keypoints.forEach((keypoint) => {
         if (keypoint.score > 0.5) {
@@ -131,9 +159,18 @@ const VideoUploadPlayer = ({ videoIndex }) => {
     })
   }
 
-  const stopDetection = () => {
-    if (animationIdRef.current) {
-      cancelAnimationFrame(animationIdRef.current)
+  const stopMoveNetDetection = () => {
+    if (animationIdMoveNetRef.current) {
+      cancelAnimationFrame(animationIdMoveNetRef.current)
+      const ctx = canvasRef.current.getContext('2d')
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+    }
+  }
+
+  const stopPoseNetDetection = () => {
+    if (animationIdPoseNetRef.current) {
+      cancelAnimationFrame(animationIdPoseNetRef.current)
+      animationIdPoseNetRef.current = null // Clear the reference
       const ctx = canvasRef.current.getContext('2d')
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
     }
@@ -145,11 +182,19 @@ const VideoUploadPlayer = ({ videoIndex }) => {
   }
 
   const handleMoveNetToggle = () => {
-    setIsMoveNetActive((prevIsMoveNetActive) => !prevIsMoveNetActive)
+    setIsMoveNetActive((prevIsMoveNetActive) => {
+      const newState = !prevIsMoveNetActive
+      if (!newState) stopMoveNetDetection()
+      return newState
+    })
   }
 
   const handlePoseNetToggle = () => {
-    setIsPoseNetActive((prevIsPoseNetActive) => !prevIsPoseNetActive)
+    setIsPoseNetActive((prevIsPoseNetActive) => {
+      const newState = !prevIsPoseNetActive
+      if (!newState) stopPoseNetDetection() // Stop detection immediately
+      return newState
+    })
   }
 
   return (
@@ -170,6 +215,8 @@ const VideoUploadPlayer = ({ videoIndex }) => {
               className='video-element'
               autoPlay
               loop
+              width='1920'
+              height='1080'
             />
           </div>
           <div className='button-row'>

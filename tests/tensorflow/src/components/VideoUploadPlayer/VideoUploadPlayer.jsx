@@ -7,15 +7,13 @@ import '@tensorflow/tfjs-backend-webgl'
 
 const VideoUploadPlayer = ({ videoIndex }) => {
   const [videoSrc, setVideoSrc, videoRef] = useState(null)
-  const [videoWidth, setVideoWidth, videoWidthRef] = useState(0)
-  const [videoHeight, setVideoHeight, videoHeightRef] = useState(0)
+  const [, setVideoWidth, videoWidthRef] = useState(0)
+  const [, setVideoHeight, videoHeightRef] = useState(0)
   const [detector, setDetector] = useState({ movenet: null, posenet: null })
   const moveNetCanvasRef = useRef(null)
   const poseNetCanvasRef = useRef(null)
-  const [isMoveNetActive, setIsMoveNetActive, isMoveNetActiveRef] =
-    useState(false)
-  const [isPoseNetActive, setIsPoseNetActive, isPoseNetActiveRef] =
-    useState(false)
+  const [, setIsMoveNetActive, isMoveNetActiveRef] = useState(false)
+  const [, setIsPoseNetActive, isPoseNetActiveRef] = useState(false)
   const animationIdMoveNetRef = useRef(null)
   const animationIdPoseNetRef = useRef(null)
 
@@ -50,25 +48,27 @@ const VideoUploadPlayer = ({ videoIndex }) => {
           architecture: 'MobileNetV1',
           outputStride: 16,
           inputResolution: {
-            width: videoWidth,
-            height: videoHeight,
+            width: 257,
+            height: 257,
           },
-          multiplier: 0.5,
+          multiplier: 0.75,
         }
       )
       setDetector({ movenet: movenetDetector, posenet: posenetDetector })
+      console.log('Models loaded')
     }
     loadModels()
-  }, [videoHeight, videoWidth])
+  }, [])
 
   const handleOffClick = () => {
     setIsMoveNetActive(false)
     setIsPoseNetActive(false)
+    stopMoveNetDetection()
+    stopPoseNetDetection()
   }
 
-  //MoveNet ------------------------------------------------------------------
-  const handleMoveNetToggle = async () => {
-    const newState = !isMoveNetActive
+  const handleMoveNetToggle = () => {
+    const newState = !isMoveNetActiveRef.current
     setIsMoveNetActive(newState)
     if (newState) {
       startMoveNetDetection()
@@ -77,51 +77,8 @@ const VideoUploadPlayer = ({ videoIndex }) => {
     }
   }
 
-  const startMoveNetDetection = async () => {
-    if (videoRef.current && detector.movenet) {
-      const video = videoRef.current
-      const canvas = moveNetCanvasRef.current
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-
-      const detect = async () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        const movenetPoses = await detector.movenet.estimatePoses(video)
-        drawPoses(
-          movenetPoses,
-          ctx,
-          'red',
-          moveNetCanvasRef,
-          poseDetection.SupportedModels.MoveNet
-        )
-        animationIdMoveNetRef.current = requestAnimationFrame(detect)
-      }
-
-      if (isMoveNetActiveRef.current === false) {
-        return
-      } else {
-        detect()
-      }
-    }
-  }
-
-  const stopMoveNetDetection = () => {
-    if (animationIdMoveNetRef.current) {
-      cancelAnimationFrame(animationIdMoveNetRef.current)
-      const ctx = moveNetCanvasRef.current.getContext('2d')
-      ctx.clearRect(
-        0,
-        0,
-        moveNetCanvasRef.current.width,
-        moveNetCanvasRef.current.height
-      )
-    }
-  }
-
-  //PoseNet ------------------------------------------------------------------
   const handlePoseNetToggle = () => {
-    const newState = !isPoseNetActive
+    const newState = !isPoseNetActiveRef.current
     setIsPoseNetActive(newState)
     if (newState) {
       startPoseNetDetection()
@@ -130,81 +87,104 @@ const VideoUploadPlayer = ({ videoIndex }) => {
     }
   }
 
-  const startPoseNetDetection = async () => {
-    if (videoRef.current && detector.posenet) {
-      const video = videoRef.current
-      const canvas = poseNetCanvasRef.current
-      canvas.width = video.videoWidth
-      canvas.height = video.videoHeight
-      const ctx = canvas.getContext('2d')
-      const detect = async () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        const posenetPoses = await detector.posenet.estimatePoses(video)
-        drawPoses(
-          posenetPoses,
-          ctx,
-          'blue',
-          poseNetCanvasRef,
-          poseDetection.SupportedModels.PoseNet
-        )
-        animationIdPoseNetRef.current = requestAnimationFrame(detect)
-      }
-      if (!isPoseNetActiveRef.current) {
+  const startDetection = async (
+    modelType,
+    canvasRef,
+    detector,
+    activeRef,
+    animationIdRef,
+    drawFunction
+  ) => {
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+
+    const detect = async () => {
+      if (!activeRef.current) {
+        console.log(`${modelType} is no longer active, stopping detection loop`)
         return
-      } else {
-        detect()
       }
-    }
-  }
 
-  const stopPoseNetDetection = () => {
-    if (animationIdPoseNetRef.current) {
-      cancelAnimationFrame(animationIdPoseNetRef.current)
-      const ctx = poseNetCanvasRef.current.getContext('2d')
-      ctx.clearRect(
-        0,
-        0,
-        poseNetCanvasRef.current.width,
-        poseNetCanvasRef.current.height
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const poses = await detector.estimatePoses(video)
+      console.log(`${modelType} poses:`, poses)
+      drawFunction(
+        poses,
+        ctx,
+        modelType === 'MoveNet' ? 'red' : 'blue',
+        canvasRef
       )
+
+      animationIdRef.current = requestAnimationFrame(detect)
+    }
+
+    detect()
+  }
+
+  const startMoveNetDetection = () =>
+    startDetection(
+      'MoveNet',
+      moveNetCanvasRef,
+      detector.movenet,
+      isMoveNetActiveRef,
+      animationIdMoveNetRef,
+      drawMoveNetPoses
+    )
+  const startPoseNetDetection = () =>
+    startDetection(
+      'PoseNet',
+      poseNetCanvasRef,
+      detector.posenet,
+      isPoseNetActiveRef,
+      animationIdPoseNetRef,
+      drawPoseNetPoses
+    )
+
+  const stopDetection = (canvasRef, animationIdRef) => {
+    if (animationIdRef.current) {
+      cancelAnimationFrame(animationIdRef.current)
+      animationIdRef.current = null
+      const ctx = canvasRef.current.getContext('2d')
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
     }
   }
 
-  useEffect(() => {
-    return () => {
-      stopMoveNetDetection()
-      stopPoseNetDetection()
-    }
-  }, [])
+  const stopMoveNetDetection = () =>
+    stopDetection(moveNetCanvasRef, animationIdMoveNetRef)
+  const stopPoseNetDetection = () =>
+    stopDetection(poseNetCanvasRef, animationIdPoseNetRef)
 
-  //DRAW FUNCTION
-  const drawPoses = (poses, ctx, color, canvasRef, modelType) => {
-    const baseSize = 20
-    const baseLineWidth = 10
+  const drawMoveNetPoses = (poses, ctx, color, canvasRef) => {
+    const baseSize = 5
+    const baseLineWidth = 2
     const scaleX = canvasRef.current.width / videoWidthRef.current
     const scaleY = canvasRef.current.height / videoHeightRef.current
     const dotSize = baseSize * Math.min(scaleX, scaleY)
     const lineWidth = baseLineWidth * Math.min(scaleX, scaleY)
 
-    const drawKeypoint = (keypoint, ctx) => {
+    const drawKeypoint = (keypoint) => {
       const { x, y } = keypoint
       ctx.beginPath()
-      ctx.arc(x, y, dotSize, 0, 2 * Math.PI)
+      ctx.arc(x * scaleX, y * scaleY, dotSize, 0, 2 * Math.PI)
       ctx.fillStyle = color
       ctx.fill()
     }
 
-    const drawSkeleton = (keypoints, ctx) => {
-      const adjacentKeyPoints = poseDetection.util.getAdjacentPairs(modelType)
+    const drawSkeleton = (keypoints) => {
+      const adjacentKeyPoints = poseDetection.util.getAdjacentPairs(
+        poseDetection.SupportedModels.MoveNet
+      )
       ctx.lineWidth = lineWidth
       ctx.strokeStyle = color
       adjacentKeyPoints.forEach(([i, j]) => {
         const kp1 = keypoints[i]
         const kp2 = keypoints[j]
-        if (kp1.score > 0.0 && kp2.score > 0.0) {
+        if (kp1.score > 0.3 && kp2.score > 0.3) {
           ctx.beginPath()
-          ctx.moveTo(kp1.x, kp1.y)
-          ctx.lineTo(kp2.x, kp2.y)
+          ctx.moveTo(kp1.x * scaleX, kp1.y * scaleY)
+          ctx.lineTo(kp2.x * scaleX, kp2.y * scaleY)
           ctx.stroke()
         }
       })
@@ -212,11 +192,55 @@ const VideoUploadPlayer = ({ videoIndex }) => {
 
     poses.forEach((pose) => {
       pose.keypoints.forEach((keypoint) => {
-        if (keypoint.score > 0.0) {
-          drawKeypoint(keypoint, ctx)
+        if (keypoint.score > 0.3) {
+          drawKeypoint(keypoint)
         }
       })
-      drawSkeleton(pose.keypoints, ctx)
+      drawSkeleton(pose.keypoints)
+    })
+  }
+
+  const drawPoseNetPoses = (poses, ctx, color, canvasRef) => {
+    const baseSize = 5
+    const baseLineWidth = 2
+    const scaleX = canvasRef.current.width / videoWidthRef.current
+    const scaleY = canvasRef.current.height / videoHeightRef.current
+    const dotSize = baseSize * Math.min(scaleX, scaleY)
+    const lineWidth = baseLineWidth * Math.min(scaleX, scaleY)
+
+    const drawKeypoint = (keypoint) => {
+      const { x, y } = keypoint
+      ctx.beginPath()
+      ctx.arc(x * scaleX, y * scaleY, dotSize, 0, 2 * Math.PI)
+      ctx.fillStyle = color
+      ctx.fill()
+    }
+
+    const drawSkeleton = (keypoints) => {
+      const adjacentKeyPoints = poseDetection.util.getAdjacentPairs(
+        poseDetection.SupportedModels.PoseNet
+      )
+      ctx.lineWidth = lineWidth
+      ctx.strokeStyle = color
+      adjacentKeyPoints.forEach(([i, j]) => {
+        const kp1 = keypoints[i]
+        const kp2 = keypoints[j]
+        if (kp1.score > 0.5 && kp2.score > 0.5) {
+          ctx.beginPath()
+          ctx.moveTo(kp1.x * scaleX, kp1.y * scaleY)
+          ctx.lineTo(kp2.x * scaleX, kp2.y * scaleY)
+          ctx.stroke()
+        }
+      })
+    }
+
+    poses.forEach((pose) => {
+      pose.keypoints.forEach((keypoint) => {
+        if (keypoint.score > 0.5) {
+          drawKeypoint(keypoint)
+        }
+      })
+      drawSkeleton(pose.keypoints)
     })
   }
 
